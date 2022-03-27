@@ -26,6 +26,7 @@ public class FileUploadServiceImpl implements FileUploadService {
 
     @Override
     public FileUploadStatus uploadFiles(MultipartFile[] files) throws IOException {
+        log.info("Saving files to database");
 
         List<File> mappedFiles = new ArrayList<>();
 
