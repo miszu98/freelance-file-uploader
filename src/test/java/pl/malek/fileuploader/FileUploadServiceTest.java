@@ -20,6 +20,7 @@ import pl.malek.fileuploader.service.impl.FileValidatorsServiceImpl;
 import java.io.IOException;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -88,4 +89,12 @@ public class FileUploadServiceTest {
         assertEquals(entityFileListCaptor.getValue().size(), 1);
     }
 
+    @Test
+    void shouldThrowExceptionAboutWrongFileType() throws WrongFileTypeException, IOException {
+        MultipartFile[] files = new MultipartFile[]{new MockMultipartFile("test", new byte[]{})};
+
+        when(fileValidatorsService.validateFileTypes(files)).thenReturn(false);
+
+        assertThrows(WrongFileTypeException.class, () -> fileUploadService.uploadFiles(files));
+    }
 }
