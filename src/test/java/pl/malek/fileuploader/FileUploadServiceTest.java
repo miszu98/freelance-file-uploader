@@ -11,9 +11,12 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 import pl.malek.fileuploader.dto.File;
 import pl.malek.fileuploader.entity.FileEntity;
+import pl.malek.fileuploader.exceptions.WrongFileTypeException;
 import pl.malek.fileuploader.mapper.FileMapper;
 import pl.malek.fileuploader.repository.FileRepository;
 import pl.malek.fileuploader.service.impl.FileUploadServiceImpl;
+import pl.malek.fileuploader.service.impl.FileValidatorsServiceImpl;
+
 import java.io.IOException;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,6 +33,9 @@ public class FileUploadServiceTest {
     @Mock
     private FileMapper fileMapper;
 
+    @Mock
+    private FileValidatorsServiceImpl fileValidatorsService;
+
     @InjectMocks
     private FileUploadServiceImpl fileUploadService;
 
@@ -43,8 +49,10 @@ public class FileUploadServiceTest {
     private ArgumentCaptor<List<FileEntity>> entityFileListCaptor;
 
     @Test
-    void shouldMapMultipartFilesToFileDto() throws IOException {
+    void shouldMapMultipartFilesToFileDto() throws IOException, WrongFileTypeException {
         MultipartFile[] files = new MultipartFile[]{new MockMultipartFile("test", new byte[]{})};
+
+        when(fileValidatorsService.validateFileTypes(files)).thenReturn(true);
 
         fileUploadService.uploadFiles(files);
 
@@ -54,10 +62,12 @@ public class FileUploadServiceTest {
     }
 
     @Test
-    void shouldMapFilesToEntities() throws IOException {
-        MultipartFile[] multipartFiles = new MultipartFile[]{new MockMultipartFile("test", new byte[]{})};
+    void shouldMapFilesToEntities() throws IOException, WrongFileTypeException {
+        MultipartFile[] files = new MultipartFile[]{new MockMultipartFile("test", new byte[]{})};
 
-        fileUploadService.uploadFiles(multipartFiles);
+        when(fileValidatorsService.validateFileTypes(files)).thenReturn(true);
+
+        fileUploadService.uploadFiles(files);
 
         verify(fileMapper).mapToFileEntities(fileListCaptor.capture());
 
@@ -65,12 +75,13 @@ public class FileUploadServiceTest {
     }
 
     @Test
-    void shouldSaveFiles() throws IOException {
-        MultipartFile[] multipartFiles = new MultipartFile[]{new MockMultipartFile("test", new byte[]{})};
+    void shouldSaveFiles() throws IOException, WrongFileTypeException {
+        MultipartFile[] files = new MultipartFile[]{new MockMultipartFile("test", new byte[]{})};
 
+        when(fileValidatorsService.validateFileTypes(files)).thenReturn(true);
         when(fileMapper.mapToFileEntities(anyList())).thenReturn(List.of(FileEntity.builder().build()));
 
-        fileUploadService.uploadFiles(multipartFiles);
+        fileUploadService.uploadFiles(files);
 
         verify(fileRepository).saveAll(entityFileListCaptor.capture());
 
